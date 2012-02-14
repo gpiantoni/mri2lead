@@ -1,7 +1,8 @@
 function mri2vol(cfg, subj)
 %MRI2VOL create leadfield, based on MRI
 
-mversion = 10;
+mversion = 11;
+%11 12/02/14 add smoothing only if necessary
 %10 12/02/14 renamed to mri2vol
 %09 12/02/05 copied from gosd/source_mri2vol, but don't do extrasmoothing
 %08 12/02/03 prepare leadfield again, it does depend on n of elec, but we can remove extra electrodes
@@ -91,15 +92,25 @@ bnd = ft_prepare_mesh_new(cfg2, segment);
 %-----------------%
 
 %-----------------%
-%-prepare mesh for scalp
+%-prepare mesh for scalp (we need to be more liberal with threshold, bc of
+%poor quality of MRI)
+if ~isempty(cfg.mri2vol.smoothbnd)
+  %-------%
+  %-add padding and fix M matrix by including the padding as well
+  segment.scalp = double(padarray(segment.scalp, [1 1 1] * cfg.mri2lead.smoothbnd, 'both'));
+  M(1:3,4) = M(1:3,4) - cfg.mri2lead.smoothbnd/2 * diag(M(1:3,1:3)); %TODO: check this
+  %-------%
+end
+
 cfg2 = [];
 cfg2.tissue = {'scalp'};
 cfg2.numvertices = cfg.mri2vol.numvertices(1);
 cfg2.thresholdseg = cfg.mri2vol.threshbnd;
+cfg2.smoothseg = cfg.mri2vol.smoothbnd;
 cfg2.transform = M;
 scalp = ft_prepare_mesh_new(cfg2, segment);
 %-----------------%
-  
+
 %-----------------%
 %-combine scalp and bnd
 bnd = [scalp bnd];
