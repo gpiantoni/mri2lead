@@ -13,7 +13,8 @@ function vol2lead(cfg, subj)
 % cfg.individual.elec = sens;
 % [cfg] = ft_interactiverealign(cfg)
 
-mversion = 10;
+mversion = 11;
+%11 12/02/14 read_sens on the fly
 %10 12/02/14 renamed, cleaned up
 %09 12/02/05 copied from gosd/source_mri2lead, but don't do extrasmoothing
 %08 12/02/03 prepare leadfield again, it does depend on n of elec, but we can remove extra electrodes
@@ -61,13 +62,9 @@ if isfield(vol, 'mat')
   
   %-----------------%
   %-elec
-  load /data1/toolbox/elecloc/easycap_61_FT.mat elec
-  sens = [];
-  sens.elecpos = [elec.pnt; 0 0 0; 0 0 0; 0 0 0];
-  sens.chanpos = [elec.pnt; 0 0 0; 0 0 0; 0 0 0];
-  sens.label = elec.label;
-  sens.unit = 'mm';
-  elec = sens;
+  elec = ft_read_sens(cfg.vol2lead.sensfile);
+  elec.label = upper(elec.label);
+  elec = ft_convert_units(elec, 'mm');
   
   %-------%
   %-simple transformation (based on visual realignment)
