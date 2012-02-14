@@ -1,8 +1,9 @@
-function source_cpmri(cfg, subj)
+function cpmri(cfg, subj)
 %CPMRI copy MRI images
 % fslmaths gosd_svui_0001_smri_t1_brain.nii.gz -add gosd_svui_0002_smri_t1_brain.nii.gz -add gosd_svui_0003_smri_t1_brain.nii.gz -add gosd_svui_0004_smri_t1_brain.nii.gz -add gosd_svui_0006_smri_t1_brain.nii.gz -add gosd_svui_0006_smri_t1_brain.nii.gz -add gosd_svui_0007_smri_t1_brain.nii.gz -add gosd_svui_0008_smri_t1_brain.nii.gz -add gosd_svui_0009_smri_t1_brain.nii.gz -add gosd_svui_0010_smri_t1_brain.nii.gz -add gosd_svui_0011_smri_t1_brain.nii.gz -add gosd_svui_0012_smri_t1_brain.nii.gz -add gosd_svui_0013_smri_t1_brain.nii.gz -add gosd_svui_0015_smri_t1_brain.nii.gz -div 13 gosd_svui_avg_smri_t1_brain
 
-mversion = 4;
+mversion = 5;
+%05 12/02/14 renamed to cpmri
 %04 11/11/10 spm implemented as well, it works better (faster)
 %03 11/11/10 use fsl
 %02 11/11/10 away from swdti, into source
