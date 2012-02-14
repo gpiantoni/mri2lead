@@ -71,8 +71,8 @@ if isfield(vol, 'mat')
   
   %-------%
   %-simple transformation (based on visual realignment)
-  elec.chanpos = warp_apply(cfg.mri2lead.elecM, elec.chanpos);
-  elec.elecpos = warp_apply(cfg.mri2lead.elecM, elec.elecpos);
+  elec.chanpos = warp_apply(cfg.vol2lead.elecM, elec.chanpos);
+  elec.elecpos = warp_apply(cfg.vol2lead.elecM, elec.elecpos);
   %-------%
   
   [vol, elec] = ft_prepare_vol_sens(vol, elec);
