@@ -7,6 +7,8 @@ function bnd2lead(cfg, subj)
 %  .vol.mod: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/
 %  .vol.cond: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/VOLCONDNAME/
 %  
+%  .sens.file: file with EEG sensors. It can be sfp or mat.
+%
 %  .bnd2lead.method: method for head model ('bem_dipoli' 'bem_openmeeg' 'bemcp')
 %  .bnd2lead.conductivity: conductivity of tissues ([0.3300 0.0042 0.3300])
 %
@@ -45,7 +47,7 @@ elecfile = [mdir mfile '_elec'];
 
 %-------------------------------------%
 %-load vol
-load(volfile, 'vol')
+load(bndfile, 'bnd')
 
 %-----------------%
 %-headmodel
@@ -63,14 +65,14 @@ if isfield(vol, 'mat')
   
   %-----------------%
   %-elec
-  elec = ft_read_sens(cfg.vol2lead.sensfile);
+  elec = ft_read_sens(cfg.sens.file);
   elec.label = upper(elec.label);
   elec = ft_convert_units(elec, 'mm');
   
   %-------%
   %-simple transformation (based on visual realignment)
-  elec.chanpos = warp_apply(cfg.vol2lead.elecM, elec.chanpos);
-  elec.elecpos = warp_apply(cfg.vol2lead.elecM, elec.elecpos);
+  elec.chanpos = warp_apply(cfg.bnd2lead.elecM, elec.chanpos);
+  elec.elecpos = warp_apply(cfg.bnd2lead.elecM, elec.elecpos);
   %-------%
   
   [vol, elec] = ft_prepare_vol_sens(vol, elec);
@@ -85,7 +87,7 @@ if isfield(vol, 'mat')
   cfg4.grid.xgrid =  -70:10:70;
   cfg4.grid.ygrid = -110:10:80;
   cfg4.grid.zgrid =  -60:10:90;
-  cfg4.inwardshift = 1; % to avoid dipoles on the border of bnd(3), which are very instable
+  cfg4.inwardshift = cfg.bnd2lead.inwardshift; % to avoid dipoles on the border of bnd(3), which are very instable
   cfg4.grid.tight = 'no';
   cfg4.feedback = 'none';
   lead = ft_prepare_leadfield(cfg4, []);

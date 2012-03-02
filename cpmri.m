@@ -14,9 +14,6 @@ function cpmri(cfg, subj)
 % Part of MRI2LEAD
 % see also CPMRI, MRI2VOL, VOL2LEAD
 
-% to average all the heads together
-% fslmaths gosd_svui_0001_smri_t1_brain.nii.gz -add gosd_svui_0002_smri_t1_brain.nii.gz -add gosd_svui_0003_smri_t1_brain.nii.gz -add gosd_svui_0004_smri_t1_brain.nii.gz -add gosd_svui_0006_smri_t1_brain.nii.gz -add gosd_svui_0006_smri_t1_brain.nii.gz -add gosd_svui_0007_smri_t1_brain.nii.gz -add gosd_svui_0008_smri_t1_brain.nii.gz -add gosd_svui_0009_smri_t1_brain.nii.gz -add gosd_svui_0010_smri_t1_brain.nii.gz -add gosd_svui_0011_smri_t1_brain.nii.gz -add gosd_svui_0012_smri_t1_brain.nii.gz -add gosd_svui_0013_smri_t1_brain.nii.gz -add gosd_svui_0015_smri_t1_brain.nii.gz -div 13 gosd_svui_avg_smri_t1_brain
-
 %---------------------------%
 %-start log
 output = sprintf('(p%02.f) %s started at %s on %s\n', ...
