@@ -23,7 +23,7 @@ tic_t = tic;
 
 %---------------------------%
 %-dir and files
-ft_hastoolbox('spm8', 2)
+ft_hastoolbox('spm8', 2);
 
 rdir = sprintf('%s%04.f/%s/%s/', cfg.recs, subj, cfg.vol.mod, 'raw'); % recording
 mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % mridata dir
@@ -102,7 +102,6 @@ if exist([rdir rfile ext], 'file')
     %-----------------%
     %-unzip
     gunzip([mdir mfile ext]);
-    mfile = [mfile ext(1:4)];
     %-----------------%
     %---------------------------%
     
@@ -116,7 +115,7 @@ if exist([rdir rfile ext], 'file')
     eflags.nits = 16;
     eflags.reg = 1;
     
-    spm_normalise(refimg, [mdir mfile], outsn, '', '', eflags);
+    spm_normalise(refimg, [mdir mfile ext(1:4)], outsn, '', '', eflags);
     %---------------------------%
     
     %---------------------------%
@@ -128,16 +127,16 @@ if exist([rdir rfile ext], 'file')
     rflags.interp = 1;
     rflags.wrap = [0 0 0];
     rflags.prefix = 'w';
-    spm_write_sn([mdir mfile], outsn, rflags);
+    spm_write_sn([mdir mfile ext(1:4)], outsn, rflags);
     %---------------------------%
     
     %---------------------------%
     %-clean up
     uncomp = [mdir mfile '_' cfg.normalize ext(1:4)];
-    system(['mv ' mdir rflags.prefix mfile ' ' uncomp]);
+    system(['mv ' mdir rflags.prefix mfile ext(1:4) ' ' uncomp]);
     gzip(uncomp);
     
-    delete([mdir mfile])
+    delete([mdir mfile ext(1:4)])
     delete(uncomp);
     %---------------------------%
     %-----------------------------------------------%
