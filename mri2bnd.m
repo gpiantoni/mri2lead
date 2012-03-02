@@ -9,7 +9,6 @@ function mri2bnd(cfg, subj)
 %
 %  .mri2bnd.tpmthreshold: threshold for segmentation (1 default, 0.05 pretty sensitive)
 %  .mri2bnd.numvertices: number of vertices ([2500 1200 1000])
-%  .mri2bnd.smoothbnd: smoothing for mesh
 %  .mri2bnd.threshbnd: threshold for mesh
 %
 % Part of MRI2LEAD
@@ -82,21 +81,11 @@ bnd = ft_prepare_mesh_new(cfg2, segment);
 %-----------------%
 
 %-----------------%
-%-prepare mesh for scalp (we need to be more liberal with threshold, bc of
-%poor quality of MRI)
-if ~isempty(cfg.mri2bnd.smoothbnd)
-  %-------%
-  %-add padding and fix M matrix by including the padding as well
-  segment.scalp = double(padarray(segment.scalp, [1 1 1] * cfg.mri2lead.smoothbnd, 'both'));
-  M(1:3,4) = M(1:3,4) - cfg.mri2lead.smoothbnd/2 * diag(M(1:3,1:3)); %TODO: check this
-  %-------%
-end
-
+%-prepare mesh for scalp
 cfg2 = [];
 cfg2.tissue = {'scalp'};
 cfg2.numvertices = cfg.mri2bnd.numvertices(1);
 cfg2.thresholdseg = cfg.mri2bnd.threshbnd;
-cfg2.smoothseg = cfg.mri2bnd.smoothbnd;
 cfg2.transform = M;
 scalp = ft_prepare_mesh_new(cfg2, segment);
 %-----------------%
