@@ -6,10 +6,10 @@ function bnd2lead(cfg, subj)
 %  .rec: name of the recordings (part of the structrual filename)
 %  .vol.mod: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/
 %  .vol.cond: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/VOLCONDNAME/
-%  
+%
 %  .sens.file: file with EEG sensors. It can be sfp or mat.
 %
-%  .bnd2lead.method: method for head model ('bem_dipoli' 'bem_openmeeg' 'bemcp')
+%  .vol.type: method for head model ('bem_dipoli' 'bem_openmeeg' 'bemcp')
 %  .bnd2lead.conductivity: conductivity of tissues ([0.3300 0.0042 0.3300])
 %
 % Part of MRI2LEAD
@@ -52,7 +52,7 @@ load(bndfile, 'bnd')
 %-----------------%
 %-headmodel
 cfg3  = [];
-cfg3.method = cfg.bnd2lead.method;
+cfg3.method = cfg.vol.type;
 cfg3.conductivity = cfg.bnd2lead.conductivity;
 vol = ft_prepare_headmodel(cfg3, bnd);
 save(volfile, 'vol')
