@@ -40,8 +40,8 @@ mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % m
 mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
 
 bndfile = [mdir mfile '_bnd'];
-volfile = [mdir mfile '_vol' cfg.mri2bnd.method(4:end)];
-leamfile = [mdir mfile '_lead' cfg.mri2vol.method(4:end)];
+volfile = [mdir mfile '_vol_' cfg.vol.type];
+leamfile = [mdir mfile '_lead_' cfg.vol.type];
 elecfile = [mdir mfile '_elec'];
 %---------------------------%
 

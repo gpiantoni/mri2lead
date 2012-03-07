@@ -146,7 +146,7 @@ if exist([rdir rfile ext], 'file')
   %---------------------------%
   %-copy data to main directory
   if ~isempty(cfg.smri)
-    system(['ln ' mdir mfile '_' cfg.normalize '.nii.gz ' cfg.smri mfile '_' cfg.normalize '.nii.gz']);
+    system(['ln ' mdir mfile '_' cfg.normalize '.nii.gz ' cfg.smri mfile '_' cfg.normalize ext]);
   end
   %---------------------------%
   
