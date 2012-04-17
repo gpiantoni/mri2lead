@@ -15,7 +15,7 @@ function bnd2lead(cfg, subj)
 %  .bnd2lead.mni.warp: warp or use precomputed grid (logical)
 %  .bnd2lead.mni.resolution: (if warp) resolution of the grid (5,6,8,10 mm)
 %  .bnd2lead.mni.nonlinear: run non-linear mni registration ('yes' or 'no')
-%  
+%
 %  It only makes sense to warp to mni if your MRI are not already realigned
 %  in MNI space. The MNI wrapping creates a MNI-aligned grid in subject-MRI
 %  space.
@@ -23,13 +23,13 @@ function bnd2lead(cfg, subj)
 % Part of MRI2LEAD
 % see also CPMRI, MRI2BND, BND2LEAD
 
-% load /data1/toolbox/elecloc/easycap_61_FT.mat elec 
+% load /data1/toolbox/elecloc/easycap_61_FT.mat elec
 % sens = [];
 % sens.elecpos = [elec.pnt; 0 0 0; 0 0 0; 0 0 0];
 % sens.chanpos = [elec.pnt; 0 0 0; 0 0 0; 0 0 0];
 % sens.label = elec.label;
 % sens.unit = 'mm';
-%   
+%
 % cfg = [];
 % cfg.template.vol = vol;
 % cfg.individual.elec = sens;
@@ -48,7 +48,6 @@ mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % m
 mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
 ext = '.nii.gz';
 
-mrifile = [mdir mfile cfg.normalize ext];
 bndfile = [mdir mfile '_bnd'];
 volfile = [mdir mfile '_vol_' cfg.vol.type];
 leadfile = [mdir mfile '_lead_' cfg.vol.type];
@@ -74,33 +73,23 @@ save(volfile, 'vol')
 if isfield(vol, 'mat')
   
   %-----------------%
-  %-elec
-  elec = ft_read_sens(cfg.sens.file);
-  elec.label = upper(elec.label);
-  elec = ft_convert_units(elec, 'mm');
-  
-  %-------%
-  %-simple transformation (based on visual realignment)
-  elec.chanpos = warp_apply(cfg.bnd2lead.elecM, elec.chanpos);
-  elec.elecpos = warp_apply(cfg.bnd2lead.elecM, elec.elecpos);
-  %-------%
-  
-  [vol, elec] = ft_prepare_vol_sens(vol, elec);
-  save(elecfile, 'elec')
-  %-----------------%
-  
-  %-----------------%
   %-create grid
   cfg4 = [];
   
   if cfg.bnd2lead.mni.warp
     
+    if ~strcmp(cfg.normalize, '')
+      output = sprintf('%ERROR: you should use the MRI in native space, not after normalization\n', outout);
+    end
+    
+    mrifile = [mdir mfile ext]; % mri in native space, not in MNI space!
+    
     mri = ft_read_mri(mrifile);
-    cfg.grid.warpmni    = 'yes';
-    cfg.grid.resolution = cfg.bnd2lead.mni.resolution;
-    cfg.grid.nonlinear  = cfg.bnd2lead.mni.nonlinear;
-    cfg.mri             = mri; 
-    cfg.mri.coordsys    = 'spm';
+    cfg4.grid.warpmni    = 'yes';
+    cfg4.grid.resolution = cfg.bnd2lead.mni.resolution;
+    cfg4.grid.nonlinear  = cfg.bnd2lead.mni.nonlinear;
+    cfg4.mri             = mri;
+    cfg4.mri.coordsys    = 'spm';
     
   else
     
@@ -111,6 +100,54 @@ if isfield(vol, 'mat')
   end
   
   grid = ft_prepare_sourcemodel(cfg4);
+  %-----------------%
+  
+  %-----------------%
+  %-elec
+  elec = ft_read_sens(cfg.sens.file);
+  elec.label = upper(elec.label);
+  elec = ft_convert_units(elec, 'mm');
+  
+  %-------%
+  %-from sens space to MNI space (based on visual realignment)
+  % values can be improved and hard-coded
+  elec.chanpos = warp_apply(cfg.bnd2lead.elecM, elec.chanpos);
+  elec.elecpos = warp_apply(cfg.bnd2lead.elecM, elec.elecpos);
+  %-------%
+  %-----------------%
+  
+  if cfg.bnd2lead.mni.warp
+    %-----------------%
+    %-conversion MNI to subject space
+    %-------%
+    %-get realignment from subject-space to MNI space
+    % The ideal solution is to use ft_volumenormalise. However, the
+    % transformation matrix was completely wrong. So, we read the
+    % transformation matrix from cpmri with option '_spm'. In this case,
+    % however, we use the raw MRI
+    outsn = [mdir mfile '_sn.mat']; % transformation from subject to MNI space
+    if ~exist(outsn, 'file')
+      output = sprintf(['%sERROR: you should run once ''cpmri'' with option cfg.normalize = ''_spm'', which creates a transformation matrix\n' ...
+        'then, run ''mri2bnd'' and ''bnd2lead'', with cfg.normalize = ''''\nNo transformation applied, check results!!!!\n'], output);
+    end
+    load(outsn)
+    struct2mni = VG.mat / Affine / VF.mat;
+    mni2struct = inv(struct2mni);
+    %-------%
+    
+    %-------%
+    %-from sens space to MNI space (based on visual realignment)
+    % values can be improved and hard-coded
+    elec.chanpos = warp_apply(mni2struct, elec.chanpos);
+    elec.elecpos = warp_apply(mni2struct, elec.elecpos);
+    %-------%
+    %-----------------%
+  end
+  
+  %-----------------%
+  %-prepare elec and vol
+  [vol, elec] = ft_prepare_vol_sens(vol, elec);
+  save(elecfile, 'elec')
   %-----------------%
   
   %-----------------%

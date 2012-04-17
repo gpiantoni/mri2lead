@@ -70,7 +70,7 @@ if exist([rdir rfile ext], 'file')
     %-------%
     %-apply flirt
     system(['flirt -in ' mdir mfile ' -ref /usr/share/data/fsl-mni152-templates/MNI152_T1_1mm_brain.nii.gz ' ...
-      '-out ' mdir mfile '_' cfg.normalize ' -applyxfm -init ' mdir mfile '_brain_flirt.mat']);
+      '-out ' mdir mfile cfg.normalize ' -applyxfm -init ' mdir mfile '_brain_flirt.mat']);
     %-------%
     
     %-------%
@@ -133,7 +133,7 @@ if exist([rdir rfile ext], 'file')
     
     %---------------------------%
     %-clean up
-    uncomp = [mdir mfile '_' cfg.normalize ext(1:4)];
+    uncomp = [mdir mfile cfg.normalize ext(1:4)];
     system(['mv ' mdir rflags.prefix mfile ext(1:4) ' ' uncomp]);
     gzip(uncomp);
     
@@ -147,7 +147,7 @@ if exist([rdir rfile ext], 'file')
   %---------------------------%
   %-copy data to main directory
   if ~isempty(cfg.smri)
-    system(['ln ' mdir mfile '_' cfg.normalize '.nii.gz ' cfg.smri mfile '_' cfg.normalize ext]);
+    system(['ln ' mdir mfile cfg.normalize '.nii.gz ' cfg.smri mfile cfg.normalize ext]);
   end
   %---------------------------%
   
