@@ -27,7 +27,7 @@ mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % m
 mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
 ext = '.nii.gz';
 
-mrifile = [mdir mfile '_' cfg.normalize ext];
+mrifile = [mdir mfile cfg.normalize ext];
 bndfile = [mdir mfile '_bnd'];
 %---------------------------%
 

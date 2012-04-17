@@ -8,7 +8,8 @@ function cpmri(cfg, subj)
 %  .vol.mod: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/
 %  .vol.cond: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/VOLCONDNAME/
 %
-%  .normalize: use 'spm' or 'flirt' for spatial normalization to MNI (or ''  for no normalization)
+%  .normalize: use '_spm' or '_flirt' for spatial normalization to MNI or
+%  ''  for no normalization (note the underscore)
 %  .smri: directory to copy all the structrual data to (can be empty)
 %
 % Part of MRI2LEAD
@@ -44,7 +45,7 @@ if exist([rdir rfile ext], 'file')
   end
   %---------------------------%
   
-  if strcmp(cfg.normalize, 'flirt')
+  if strcmp(cfg.normalize, '_flirt')
     %-----------------------------------------------%
     %-USE FLIRT
     
@@ -91,7 +92,7 @@ if exist([rdir rfile ext], 'file')
     %-----------------------------------------------%
     
     
-  elseif strcmp(cfg.normalize, 'spm')
+  elseif strcmp(cfg.normalize, '_spm')
     
     %-----------------------------------------------%
     %-spm
