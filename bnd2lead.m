@@ -12,6 +12,14 @@ function bnd2lead(cfg, subj)
 %  .vol.type: method for head model ('bem_dipoli' 'bem_openmeeg' 'bemcp')
 %  .bnd2lead.conductivity: conductivity of tissues ([0.3300 0.0042 0.3300])
 %
+%  .bnd2lead.mni.warp: warp or use precomputed grid (logical)
+%  .bnd2lead.mni.resolution: (if warp) resolution of the grid (5,6,8,10 mm)
+%  .bnd2lead.mni.nonlinear: run non-linear mni registration ('yes' or 'no')
+%  
+%  It only makes sense to warp to mni if your MRI are not already realigned
+%  in MNI space. The MNI wrapping creates a MNI-aligned grid in subject-MRI
+%  space.
+%
 % Part of MRI2LEAD
 % see also CPMRI, MRI2BND, BND2LEAD
 
@@ -38,10 +46,12 @@ tic_t = tic;
 %-dir and files
 mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % mridata dir
 mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
+ext = '.nii.gz';
 
+mrifile = [mdir mfile '_' cfg.normalize ext];
 bndfile = [mdir mfile '_bnd'];
 volfile = [mdir mfile '_vol_' cfg.vol.type];
-leamfile = [mdir mfile '_lead_' cfg.vol.type];
+leadfile = [mdir mfile '_lead_' cfg.vol.type];
 elecfile = [mdir mfile '_elec'];
 %---------------------------%
 
@@ -80,18 +90,40 @@ if isfield(vol, 'mat')
   %-----------------%
   
   %-----------------%
-  %-prepare leadfield
+  %-create grid
   cfg4 = [];
-  cfg4.elec = elec;
-  cfg4.vol = vol;
-  cfg4.grid.xgrid =  -70:10:70;
-  cfg4.grid.ygrid = -110:10:80;
-  cfg4.grid.zgrid =  -60:10:90;
-  cfg4.inwardshift = cfg.bnd2lead.inwardshift; % to avoid dipoles on the border of bnd(3), which are very instable
-  cfg4.grid.tight = 'no';
-  cfg4.feedback = 'none';
-  lead = ft_prepare_leadfield(cfg4, []);
-  save(leamfile, 'lead')
+  
+  if cfg.bnd2lead.mni.warp
+    
+    mri = ft_read_mri(mrifile);
+    cfg.grid.warpmni    = 'yes';
+    cfg.grid.resolution = cfg.bnd2lead.mni.resolution;
+    cfg.grid.nonlinear  = cfg.bnd2lead.mni.nonlinear;
+    cfg.mri             = mri; 
+    cfg.mri.coordsys    = 'spm';
+    
+  else
+    
+    cfg4.grid.xgrid =  -70:10:70;
+    cfg4.grid.ygrid = -110:10:80;
+    cfg4.grid.zgrid =  -60:10:90;
+    
+  end
+  
+  grid = ft_prepare_sourcemodel(cfg4);
+  %-----------------%
+  
+  %-----------------%
+  %-prepare leadfield
+  cfg5 = [];
+  cfg5.elec = elec;
+  cfg5.vol = vol;
+  cfg5.grid = grid;
+  cfg5.inwardshift = cfg.bnd2lead.inwardshift; % to avoid dipoles on the border of bnd(3), which are very instable
+  cfg5.grid.tight = 'no';
+  cfg5.feedback = 'none';
+  lead = ft_prepare_leadfield(cfg5, []);
+  save(leadfile, 'lead')
   %-----------------%
   
 else
