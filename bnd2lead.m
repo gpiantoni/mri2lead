@@ -64,13 +64,17 @@ cfg3  = [];
 cfg3.method = cfg.vol.type;
 cfg3.conductivity = cfg.bnd2lead.conductivity;
 vol = ft_prepare_headmodel(cfg3, bnd);
-save(volfile, 'vol')
 %-----------------%
 %-------------------------------------%
 
 %-------------------------------------%
 %-electrodes and leadfield
 if isfield(vol, 'mat')
+  
+  %-----------------%
+  %-save vol only, if successful
+  save(volfile, 'vol')
+  %-----------------%
   
   %-----------------%
   %-create grid
