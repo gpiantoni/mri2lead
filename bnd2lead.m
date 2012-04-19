@@ -21,7 +21,7 @@ function bnd2lead(cfg, subj)
 %  space.
 %
 % Part of MRI2LEAD
-% see also CPMRI, MRI2BND, BND2LEAD
+% see also CPMRI, MRI2BND, BND2LEAD, USETEMPLATE
 
 % load /data1/toolbox/elecloc/easycap_61_FT.mat elec
 % sens = [];

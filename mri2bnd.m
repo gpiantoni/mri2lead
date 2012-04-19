@@ -12,7 +12,7 @@ function mri2bnd(cfg, subj)
 %  .mri2bnd.threshbnd: threshold for mesh
 %
 % Part of MRI2LEAD
-% see also CPMRI, MRI2BND, BND2LEAD
+% see also CPMRI, MRI2BND, BND2LEAD, USETEMPLATE
 
 %---------------------------%
 %-start log

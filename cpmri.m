@@ -13,7 +13,7 @@ function cpmri(cfg, subj)
 %  .smri: directory to copy all the structrual data to (can be empty)
 %
 % Part of MRI2LEAD
-% see also CPMRI, MRI2VOL, VOL2LEAD
+% see also CPMRI, MRI2VOL, VOL2LEAD, USETEMPLATE
 
 %---------------------------%
 %-start log
