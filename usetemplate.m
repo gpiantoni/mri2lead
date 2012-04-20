@@ -1,5 +1,5 @@
 function usetemplate(cfg)
-%VOL2LEAD create leadfield, based on volume
+%USETEMPLATE use bnd, vol, bnd and lead from template if bnd2lead failed
 %
 % CFG
 %  .data: name of projects/PROJNAME/subjects/
@@ -109,14 +109,14 @@ if any(todosubj)
   
   %-----------------%
   %-prepare elec and vol
-  [vol, elec] = ft_prepare_vol_sens(vol, elec);
+  [vol_elec, elec] = ft_prepare_vol_sens(vol, elec);
   %-----------------%
   
   %-----------------%
   %-prepare leadfield
   cfg5 = [];
   cfg5.elec = elec;
-  cfg5.vol = vol;
+  cfg5.vol = vol_elec;
   cfg5.grid = grid;
   cfg5.inwardshift = cfg.bnd2lead.inwardshift; % to avoid dipoles on the border of bnd(3), which are very instable
   cfg5.grid.tight = 'no';
