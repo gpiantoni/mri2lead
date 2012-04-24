@@ -33,69 +33,78 @@ bndfile = [mdir mfile '_bnd'];
 
 %-------------------------------------%
 %-read and prepare mri
-%-----------------%
-%-read
-mri = ft_read_mri(mrifile);
-%-----------------%
- 
-%-----------------%
-%-segmenting the volume, Tissue Probability Maps
-cfg1 = [];
-cfg1.threshold  = [];
-cfg1.output = 'tpm';
-cfg1.coordsys = 'spm';
-tpm = ft_volumesegment(cfg1, mri);
-tpm.anatomy = mri.anatomy;
-%-----------------%
-
-%-----------------%
-%-segmenting the volume
-cfg1 = [];
-cfg1.threshold  = cfg.mri2bnd.tpmthreshold;
-cfg1.output = 'scalp';
-cfg1.coordsys = 'spm';
-segscalp = ft_volumesegment(cfg1, tpm);
-
-cfg1 = [];
-cfg1.threshold  = [];
-cfg1.output = {'skull' 'brain'};
-cfg1.coordsys = 'spm';
-segment = ft_volumesegment(cfg1, tpm);
-segment.scalp = segscalp.scalp;
-
-clear segscalp
-%-----------------%
-%-------------------------------------%
-
-%-------------------------------------%
-%-mesh and headmodel
-M = segment.transform;
-
-%-----------------%
-%-prepare mesh for skull and brain (easy)
-cfg2 = [];
-cfg2.tissue = {'skull', 'brain'};
-cfg2.numvertices = cfg.mri2bnd.numvertices(2:3);
-cfg2.transform = M;
-bnd = ft_prepare_mesh_new(cfg2, segment);
-%-----------------%
-
-%-----------------%
-%-prepare mesh for scalp
-cfg2 = [];
-cfg2.tissue = {'scalp'};
-cfg2.numvertices = cfg.mri2bnd.numvertices(1);
-cfg2.thresholdseg = cfg.mri2bnd.threshbnd;
-cfg2.transform = M;
-scalp = ft_prepare_mesh_new(cfg2, segment);
-%-----------------%
-
-%-----------------%
-%-combine scalp and bnd
-bnd = [scalp bnd];
-
-save(bndfile, 'bnd')
-%-----------------%
+if exist(mrifile, 'file')
+  %-----------------%
+  %-read
+  mri = ft_read_mri(mrifile);
+  %-----------------%
+  
+  %-----------------%
+  %-segmenting the volume, Tissue Probability Maps
+  cfg1 = [];
+  cfg1.threshold  = [];
+  cfg1.output = 'tpm';
+  cfg1.coordsys = 'spm';
+  tpm = ft_volumesegment(cfg1, mri);
+  tpm.anatomy = mri.anatomy;
+  %-----------------%
+  
+  %-----------------%
+  %-segmenting the volume
+  cfg1 = [];
+  cfg1.threshold  = cfg.mri2bnd.tpmthreshold;
+  cfg1.output = 'scalp';
+  cfg1.coordsys = 'spm';
+  segscalp = ft_volumesegment(cfg1, tpm);
+  
+  cfg1 = [];
+  cfg1.threshold  = [];
+  cfg1.output = {'skull' 'brain'};
+  cfg1.coordsys = 'spm';
+  segment = ft_volumesegment(cfg1, tpm);
+  segment.scalp = segscalp.scalp;
+  
+  clear segscalp
+  %-----------------%
+  %-------------------------------------%
+  
+  %-------------------------------------%
+  %-mesh and headmodel
+  M = segment.transform;
+  
+  %-----------------%
+  %-prepare mesh for skull and brain (easy)
+  cfg2 = [];
+  cfg2.tissue = {'skull', 'brain'};
+  cfg2.numvertices = cfg.mri2bnd.numvertices(2:3);
+  cfg2.transform = M;
+  bnd = ft_prepare_mesh_new(cfg2, segment);
+  %-----------------%
+  
+  %-----------------%
+  %-prepare mesh for scalp
+  cfg2 = [];
+  cfg2.tissue = {'scalp'};
+  cfg2.numvertices = cfg.mri2bnd.numvertices(1);
+  cfg2.thresholdseg = cfg.mri2bnd.threshbnd;
+  cfg2.transform = M;
+  scalp = ft_prepare_mesh_new(cfg2, segment);
+  %-----------------%
+  
+  %-----------------%
+  %-combine scalp and bnd
+  bnd = [scalp bnd];
+  
+  save(bndfile, 'bnd')
+  %-----------------%
+  
+else
+  
+  %-----------------%
+  output = sprintf('%sMRI file %s does not exist\n', output, mrifile);
+  %-----------------%
+  
+end
 %-------------------------------------%
 
 %---------------------------%
