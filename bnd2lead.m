@@ -56,20 +56,26 @@ elecfile = [mdir mfile '_elec'];
 
 %-------------------------------------%
 %-load vol
-load(bndfile, 'bnd')
+if exist([bndfile '.mat'], 'file')
+  load(bndfile, 'bnd')
+else
+  output = sprintf('%sBND file %s does not exist\n', output, bndfile);
+end
 
 %-----------------%
 %-headmodel
-cfg3  = [];
-cfg3.method = cfg.vol.type;
-cfg3.conductivity = cfg.bnd2lead.conductivity;
-vol = ft_prepare_headmodel(cfg3, bnd);
+try
+  cfg3  = [];
+  cfg3.method = cfg.vol.type;
+  cfg3.conductivity = cfg.bnd2lead.conductivity;
+  vol = ft_prepare_headmodel(cfg3, bnd);
+end
 %-----------------%
 %-------------------------------------%
 
 %-------------------------------------%
 %-electrodes and leadfield
-if isfield(vol, 'mat')
+if exist('vol', 'var') && isfield(vol, 'mat')
   
   %-----------------%
   %-save vol only, if successful
@@ -104,6 +110,7 @@ if isfield(vol, 'mat')
   end
   
   grid = ft_prepare_sourcemodel(cfg4);
+  grid = ft_convert_units(grid, 'mm');
   %-----------------%
   
   %-----------------%
