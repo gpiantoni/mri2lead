@@ -79,18 +79,26 @@ if any(todosubj)
   
   %-----------------%
   %-create grid
+  cfg4 = [];
+  
   if cfg.bnd2lead.mni.warp
-    gridfile = sprintf('/data1/toolbox/fieldtrip/template/sourcemodel/standard_grid3d%dmm.mat', ...
-      cfg.bnd2lead.mni.resolution);
-    load(gridfile, 'grid')
+    
+    cfg4.grid.warpmni    = 'yes';
+    cfg4.grid.resolution = cfg.bnd2lead.mni.resolution;
+    cfg4.grid.nonlinear  = cfg.bnd2lead.mni.nonlinear;
+    cfg4.mri             = mri; % in MNI space
+    cfg4.mri.coordsys    = 'spm';
     
   else
     
-    grid.xgrid =  -70:10:70;
-    grid.ygrid = -110:10:80;
-    grid.zgrid =  -60:10:90;
+    cfg4.grid.xgrid =  -70:10:70;
+    cfg4.grid.ygrid = -110:10:80;
+    cfg4.grid.zgrid =  -60:10:90;
     
   end
+  
+  grid = ft_prepare_sourcemodel(cfg4);
+  grid = ft_convert_units(grid, 'mm');
   %-----------------%
   
   %-----------------%
@@ -135,9 +143,8 @@ end
 
 %---------------------------%
 %-copy vol, elec, lead into each subject
-for i = find(todosubj)
+for subj = cfg.subjall(todosubj)
   
-  subj = cfg.subjall(i);
   mdir = sprintf('%s%04d/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % mridata dir
   mfile = sprintf('%s_%04d_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
   
