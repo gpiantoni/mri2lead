@@ -41,7 +41,7 @@ if exist([rdir rfile ext], 'file')
   %---------------------------%
   %-get data
   if ~exist([mdir mfile ext], 'file')
-    system(['ln ' rdir rfile ext ' ' mdir mfile ext]);
+    bash(['ln ' rdir rfile ext ' ' mdir mfile ext]);
   end
   %---------------------------%
   
@@ -53,12 +53,12 @@ if exist([rdir rfile ext], 'file')
     %-realign
     %-------%
     %-bet
-    system(['bet ' mdir mfile ' ' mdir mfile '_brain -f 0.5 -g 0']);
+    bash(['bet ' mdir mfile ' ' mdir mfile '_brain -f 0.5 -g 0']);
     %-------%
     
     %-------%
     %-flirt
-    system(['flirt -in ' mdir mfile '_brain -ref /usr/share/data/fsl-mni152-templates/MNI152_T1_1mm_brain.nii.gz ' ...
+    bash(['flirt -in ' mdir mfile '_brain -ref /usr/share/data/fsl-mni152-templates/MNI152_T1_1mm_brain.nii.gz ' ...
       '-out ' mdir mfile '_brain_flirt -omat ' mdir mfile '_brain_flirt.mat ' ...
       '-bins 256 -cost corratio -searchrx -90 90 -searchry -90 90 -searchrz -90 90 -dof 12  -interp trilinear']);
     %-------%
@@ -69,7 +69,7 @@ if exist([rdir rfile ext], 'file')
     
     %-------%
     %-apply flirt
-    system(['flirt -in ' mdir mfile ' -ref /usr/share/data/fsl-mni152-templates/MNI152_T1_1mm_brain.nii.gz ' ...
+    bash(['flirt -in ' mdir mfile ' -ref /usr/share/data/fsl-mni152-templates/MNI152_T1_1mm_brain.nii.gz ' ...
       '-out ' mdir mfile cfg.normalize ' -applyxfm -init ' mdir mfile '_brain_flirt.mat']);
     %-------%
     
@@ -134,7 +134,7 @@ if exist([rdir rfile ext], 'file')
     %---------------------------%
     %-clean up
     uncomp = [mdir mfile cfg.normalize ext(1:4)];
-    system(['mv ' mdir rflags.prefix mfile ext(1:4) ' ' uncomp]);
+    bash(['mv ' mdir rflags.prefix mfile ext(1:4) ' ' uncomp]);
     gzip(uncomp);
     
     delete([mdir mfile ext(1:4)])
@@ -147,7 +147,7 @@ if exist([rdir rfile ext], 'file')
   %---------------------------%
   %-copy data to main directory
   if ~isempty(cfg.smri)
-    system(['ln ' mdir mfile cfg.normalize '.nii.gz ' cfg.smri mfile cfg.normalize ext]);
+    bash(['ln ' mdir mfile cfg.normalize '.nii.gz ' cfg.smri mfile cfg.normalize ext]);
   end
   %---------------------------%
   
