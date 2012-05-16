@@ -41,7 +41,7 @@ if exist([rdir rfile ext], 'file')
   %---------------------------%
   %-get data
   if ~exist([mdir mfile ext], 'file')
-    system(['ln ' rdir rfile ext ' ' mdir mfile ext]);
+    bash(['ln ' rdir rfile ext ' ' mdir mfile ext]);
   end
   %---------------------------%
   
@@ -134,7 +134,7 @@ if exist([rdir rfile ext], 'file')
     %---------------------------%
     %-clean up
     uncomp = [mdir mfile cfg.normalize ext(1:4)];
-    system(['mv ' mdir rflags.prefix mfile ext(1:4) ' ' uncomp]);
+    bash(['mv ' mdir rflags.prefix mfile ext(1:4) ' ' uncomp]);
     gzip(uncomp);
     
     delete([mdir mfile ext(1:4)])
@@ -147,7 +147,7 @@ if exist([rdir rfile ext], 'file')
   %---------------------------%
   %-copy data to main directory
   if ~isempty(cfg.smri)
-    system(['ln ' mdir mfile cfg.normalize '.nii.gz ' cfg.smri mfile cfg.normalize ext]);
+    bash(['ln ' mdir mfile cfg.normalize '.nii.gz ' cfg.smri mfile cfg.normalize ext]);
   end
   %---------------------------%
   
