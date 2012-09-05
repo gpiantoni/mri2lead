@@ -9,10 +9,14 @@ function bnd2lead(cfg, subj)
 %
 %  .sens.file: file with EEG sensors. It can be sfp or mat.
 %
-%  .vol.type: method for head model ('bem_dipoli' 'bem_openmeeg' 'bemcp')
+%  .vol.type: method for head model ('dipoli' 'openmeeg' 'bemcp')
 %  .bnd2lead.conductivity: conductivity of tissues ([0.3300 0.0042 0.3300])
 %
-%  .bnd2lead.mni.warp: warp or use precomputed grid (logical)
+%  .bnd2lead.loadgrid: load precomputed grid saved on file (logical) 
+%                      It should be a file like 'bnd', called 'grid'
+%                      instead with the variable 'grid' in it
+% OR
+%  .bnd2lead.mni.warp: warp or use basic grid (logical)
 %  .bnd2lead.mni.resolution: (if warp) resolution of the grid (5,6,8,10 mm)
 %  .bnd2lead.mni.nonlinear: run non-linear mni registration ('yes' or 'no')
 %
@@ -37,8 +41,8 @@ function bnd2lead(cfg, subj)
 
 %---------------------------%
 %-start log
-output = sprintf('(p%02.f) %s started at %s on %s\n', ...
-  subj, mfilename, datestr(now, 'HH:MM:SS'), datestr(now, 'dd-mmm-yy'));
+output = sprintf('%s (%04d) began at %s on %s\n', ...
+  mfilename, subj, datestr(now, 'HH:MM:SS'), datestr(now, 'dd-mmm-yy'));
 tic_t = tic;
 %---------------------------%
 
@@ -49,6 +53,7 @@ mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % m
 ext = '.nii.gz';
 
 bndfile = [mdir mfile '_bnd'];
+gridfile = [mdir mfile '_grid'];
 volfile = [mdir mfile '_vol_' cfg.vol.type];
 leadfile = [mdir mfile '_lead_' cfg.vol.type];
 elecfile = [mdir mfile '_elec'];
@@ -85,8 +90,11 @@ if exist('vol', 'var') && isfield(vol, 'mat')
   %-----------------%
   %-create grid
   cfg4 = [];
-  
-  if cfg.bnd2lead.mni.warp
+  if isfield(cfg.bnd2lead, 'loadgrid') && cfg.bnd2lead.loadgrid
+    load(gridfile, 'grid')
+    cfg4.grid = grid;
+    
+  elseif cfg.bnd2lead.mni.warp
     
     if ~strcmp(cfg.normalize, '')
       output = sprintf('%ERROR: you should use the MRI in native space, not after normalization\n', outout);
@@ -186,8 +194,8 @@ end
 %---------------------------%
 %-end log
 toc_t = toc(tic_t);
-outtmp = sprintf('(p%02.f) %s ended at %s on %s after %s\n\n', ...
-  subj, mfilename, datestr(now, 'HH:MM:SS'), datestr(now, 'dd-mmm-yy'), ...
+outtmp = sprintf('%s (%04d) ended at %s on %s after %s\n\n', ...
+  mfilename, subj, datestr(now, 'HH:MM:SS'), datestr(now, 'dd-mmm-yy'), ...
   datestr( datenum(0, 0, 0, 0, 0, toc_t), 'HH:MM:SS'));
 output = [output outtmp];
 
