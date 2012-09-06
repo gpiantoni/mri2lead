@@ -1,6 +1,7 @@
 function freesurfer2bnd(cfg, subj)
 %FREESURFER2BND create volume, based on freesurfer 
-% You need the watershed folder here
+% You should run freesurfer and you need to create a watershed folder. It
+% should have a "fsaverage" subject, to project the activity to.
 %
 % CFG
 %  .data: name of projects/PROJNAME/subjects/
@@ -27,17 +28,24 @@ tic_t = tic;
 
 %---------------------------%
 %-dir and files
+%-------%
+%-surf
+sdir = sprintf('%s%04d/%s', cfg.SUBJECTS_DIR, subj, 'surf/');
+%-------%
+
+%-------%
 %-watershed
 wdir = sprintf('%s%04d/%s', cfg.SUBJECTS_DIR, subj, 'bem/watershed/');
 wfile = sprintf('%04d_', subj);
+%-------%
 
-%-surf
-sdir = sprintf('%s%04d/%s', cfg.SUBJECTS_DIR, subj, 'surf/');
-
+%-------%
+%-output files
 mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % mridata dir
 mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
 bndfile = [mdir mfile '_bnd'];
 gridfile = [mdir mfile '_grid'];
+%-------%
 %---------------------------%
 
 %---------------------------%
@@ -69,7 +77,7 @@ for i = 1:numel(hemi)
   lowres{i} = reducebnd(highres, cfg.fs2bnd.reducegrid);
   
   %-------%
-  %-from interp_ungridded
+  %-use smudge, from fieldtrip/private
   [datin, loc] = ismember(highres.pnt, lowres{i}.pnt, 'rows');
   [datout, S1] = smudge(datin, highres.tri, cfg.fs2bnd.smudgeiter);
   

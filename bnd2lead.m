@@ -1,5 +1,5 @@
 function bnd2lead(cfg, subj)
-%VOL2LEAD create leadfield, based on volume
+%BND2LEAD create leadfield, based on volume
 %
 % CFG
 %  .data: name of projects/PROJNAME/subjects/
@@ -25,7 +25,7 @@ function bnd2lead(cfg, subj)
 %  space.
 %
 % Part of MRI2LEAD
-% see also CPMRI, MRI2BND, BND2LEAD, USETEMPLATE
+% see also CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, USETEMPLATE
 
 % load /data1/toolbox/elecloc/easycap_61_FT.mat elec
 % sens = [];

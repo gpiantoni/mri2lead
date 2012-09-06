@@ -1,5 +1,6 @@
 function usetemplate(cfg)
 %USETEMPLATE use bnd, vol, bnd and lead from template if bnd2lead failed
+% Not tested with freesurfer surfaces
 %
 % CFG
 %  .data: name of projects/PROJNAME/subjects/
@@ -17,11 +18,11 @@ function usetemplate(cfg)
 %  .bnd2lead.mni.warp: warp or use precomputed grid (logical)
 %
 % Part of MRI2LEAD
-% see also CPMRI, MRI2BND, BND2LEAD, USETEMPLATE
+% see also CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, USETEMPLATE
 
 %---------------------------%
 %-start log
-output = sprintf('%s started at %s on %s\n', ...
+output = sprintf('%s began at %s on %s\n', ...
   mfilename, datestr(now, 'HH:MM:SS'), datestr(now, 'dd-mmm-yy'));
 tic_t = tic;
 %---------------------------%
@@ -162,8 +163,8 @@ end
 %---------------------------%
 %-end log
 toc_t = toc(tic_t);
-outtmp = sprintf('(p%02.f) %s ended at %s on %s after %s\n\n', ...
-  subj, mfilename, datestr(now, 'HH:MM:SS'), datestr(now, 'dd-mmm-yy'), ...
+outtmp = sprintf('%s ended at %s on %s after %s\n\n', ...
+  mfilename, datestr(now, 'HH:MM:SS'), datestr(now, 'dd-mmm-yy'), ...
   datestr( datenum(0, 0, 0, 0, 0, toc_t), 'HH:MM:SS'));
 output = [output outtmp];
 

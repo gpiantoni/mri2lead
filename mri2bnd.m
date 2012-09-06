@@ -12,7 +12,7 @@ function mri2bnd(cfg, subj)
 %  .mri2bnd.threshbnd: threshold for mesh
 %
 % Part of MRI2LEAD
-% see also CPMRI, MRI2BND, BND2LEAD, USETEMPLATE
+% see also CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, USETEMPLATE
 
 %---------------------------%
 %-start log
@@ -34,6 +34,7 @@ bndfile = [mdir mfile '_bnd'];
 %-------------------------------------%
 %-read and prepare mri
 if exist(mrifile, 'file')
+  
   %-----------------%
   %-read
   mri = ft_read_mri(mrifile);
