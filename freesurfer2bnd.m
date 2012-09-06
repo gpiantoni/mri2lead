@@ -1,7 +1,5 @@
 function freesurfer2bnd(cfg, subj)
 %FREESURFER2BND create volume, based on freesurfer 
-% You should run freesurfer and you need to create a watershed folder. It
-% should have a "fsaverage" subject, to project the activity to.
 %
 % CFG
 %  .data: name of projects/PROJNAME/subjects/
@@ -16,6 +14,17 @@ function freesurfer2bnd(cfg, subj)
 %  .fs2bnd.smudgeiter: iteration for smudging (default = 6) (it's possible to
 %               rerun this function, only to change the amount of smudging)
 %
+% IN
+%  You should run freesurfer and you need to create a watershed folder. It
+%  should have a "fsaverage" subject, to project the activity to.
+%  It reads the folder cfg.SUBJECTS_DIR and the subject code in it (the
+%  subject code here and in freesurfer should match!)
+% 
+% OUT
+%  bnd: three-layer BEM, based on 'outer_skin' 'inner_skull'  'brain' in watershed
+%       note that the tutorial on fieldtrip uses 'inner_skull' 'outer_skull' 'outer_skin'
+%  grid: location of the dipoles in the head
+% 
 % Part of MRI2LEAD
 % see also CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, USETEMPLATE
 
@@ -50,8 +59,6 @@ gridfile = [mdir mfile '_grid'];
 
 %---------------------------%
 %-surfaces
-% note that the tutorial on fieldtrip uses 
-% {'inner_skull' 'outer_skull' 'outer_skin'}
 surface = {'outer_skin' 'inner_skull'  'brain'};
 
 if ~isfield(cfg, 'surftype'); cfg.surftype = 'smoothwm'; end
