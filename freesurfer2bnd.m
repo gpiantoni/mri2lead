@@ -12,6 +12,8 @@ function freesurfer2bnd(cfg, subj)
 %  .surftype: name of the surface to read ('smoothwm' 'pial' 'white' 'inflated' 'orig' 'sphere')
 %  .fs2bnd.reducesurf: ratio to reducepatch of surface (1 -> intact, .5 -> half)
 %  .fs2bnd.reducegrid: ratio to reducepatch of source grid (1 -> intact, .5 -> half)
+%  .fs2bnd.smudgeiter: iteration for smudging (default = 6) (it's possible to
+%               rerun this function, only to change the amount of smudging)
 %
 % Part of MRI2LEAD
 % see also CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, USETEMPLATE
@@ -45,6 +47,7 @@ gridfile = [mdir mfile '_grid'];
 surface = {'outer_skin' 'inner_skull'  'brain'};
 
 if ~isfield(cfg, 'surftype'); cfg.surftype = 'smoothwm'; end
+if ~isfield(cfg.fs2bnd, 'smudgeiter'); cfg.fs2bnd.smudgeiter = 6; end
 %---------------------------%
 
 %---------------------------%
@@ -60,16 +63,25 @@ save(bndfile, 'bnd')
 
 %---------------------------%
 %-prepare grid
-gridlh = ft_read_headshape([sdir 'lh.' cfg.surftype]);
-gridlh = reducebnd(gridlh, cfg.fs2bnd.reducegrid);
-eval(['lh_' cfg.surftype ' = gridlh;'])
+hemi = {'lh.' 'rh.'};
+for i = 1:numel(hemi)
+  highres = ft_read_headshape([sdir hemi{i} cfg.surftype]);
+  lowres{i} = reducebnd(highres, cfg.fs2bnd.reducegrid);
+  
+  %-------%
+  %-from interp_ungridded
+  [datin, loc] = ismember(highres.pnt, lowres{i}.pnt, 'rows');
+  [datout, S1] = smudge(datin, highres.tri, cfg.fs2bnd.smudgeiter);
+  
+  sel = find(datin);
+  S2  = sparse(sel(:), loc(datin), ones(size(lowres{i}.pnt,1),1), size(highres.pnt,1), size(lowres{i}.pnt,1));
+  interpmat{i} = S1 * S2;
+  %-------%
+  
+end
 
-gridrh = ft_read_headshape([sdir 'rh.' cfg.surftype]);
-gridrh = reducebnd(gridrh, cfg.fs2bnd.reducegrid);
-eval(['rh_' cfg.surftype ' = gridrh;'])
-
-grid.pos = [gridlh.pnt; gridrh.pnt];
-save(gridfile, 'grid', ['lh_' cfg.surftype], ['rh_' cfg.surftype])
+grid.pos = [lowres{1}.pnt; lowres{2}.pnt];
+save(gridfile, 'grid', 'lowres', 'interpmat')
 %---------------------------%
 
 %---------------------------%
