@@ -31,6 +31,26 @@ mrifile = [mdir mfile cfg.normalize ext];
 bndfile = [mdir mfile '_bnd'];
 %---------------------------%
 
+%---------------------------%
+%-defaults
+if ~isfield(cfg, 'mri2bnd'); cfg.mri2bnd = []; end
+
+if ~isfield(cfg.mri2bnd, 'scalp'); cfg.mri2bnd.scalp = []; end
+if ~isfield(cfg.mri2bnd.scalp, 'smooth'); cfg.mri2bnd.scalp.smooth = 5; end
+if ~isfield(cfg.mri2bnd.scalp, 'threshold'); cfg.mri2bnd.scalp.threshold = 0.1; end
+if ~isfield(cfg.mri2bnd.scalp, 'numvertices'); cfg.mri2bnd.scalp.numvertices = 2500; end
+
+if ~isfield(cfg.mri2bnd, 'skull'); cfg.mri2bnd.skull = []; end
+if ~isfield(cfg.mri2bnd.skull, 'smooth'); cfg.mri2bnd.skull.smooth = 5; end
+if ~isfield(cfg.mri2bnd.skull, 'threshold'); cfg.mri2bnd.skull.threshold = .5; end
+if ~isfield(cfg.mri2bnd.skull, 'numvertices'); cfg.mri2bnd.skull.numvertices = 2500; end
+
+if ~isfield(cfg.mri2bnd, 'brain'); cfg.mri2bnd.brain = []; end
+if ~isfield(cfg.mri2bnd.brain, 'smooth'); cfg.mri2bnd.brain.smooth = 5; end
+if ~isfield(cfg.mri2bnd.brain, 'threshold'); cfg.mri2bnd.brain.threshold = .5; end
+if ~isfield(cfg.mri2bnd.brain, 'numvertices'); cfg.mri2bnd.brain.numvertices = 2500; end
+%---------------------------%
+
 %-------------------------------------%
 %-read and prepare mri
 if exist(mrifile, 'file')
@@ -42,59 +62,54 @@ if exist(mrifile, 'file')
   
   %-----------------%
   %-segmenting the volume, Tissue Probability Maps
-  cfg1 = [];
-  cfg1.threshold  = [];
-  cfg1.output = 'tpm';
-  cfg1.coordsys = 'spm';
-  tpm = ft_volumesegment(cfg1, mri);
+  tmpcfg = [];
+  tmpcfg.threshold  = [];
+  tmpcfg.output = 'tpm';
+  tmpcfg.coordsys = 'spm';
+  tpm = ft_volumesegment(tmpcfg, mri);
   tpm.anatomy = mri.anatomy;
   %-----------------%
   
   %-----------------%
   %-segmenting the volume
-  cfg1 = [];
-  cfg1.threshold  = cfg.mri2bnd.tpmthreshold;
-  cfg1.output = 'scalp';
-  cfg1.coordsys = 'spm';
-  segscalp = ft_volumesegment(cfg1, tpm);
+  % the same function is repeated bc atm ft_volumesegment does not accept
+  % different threshold and smoothing values
+  tmpcfg = [];
+  tmpcfg.coordsys = 'spm';
   
-  cfg1 = [];
-  cfg1.threshold  = [];
-  cfg1.output = {'skull' 'brain'};
-  cfg1.coordsys = 'spm';
-  segment = ft_volumesegment(cfg1, tpm);
+  tmpcfg.threshold  = cfg.mri2bnd.scalp.threshold;
+  tmpcfg.smooth = cfg.mri2bnd.scalp.smooth;
+  tmpcfg.output = 'scalp';
+  segscalp = ft_volumesegment(tmpcfg, tpm);
+  
+  tmpcfg.threshold  = cfg.mri2bnd.skull.threshold;
+  tmpcfg.smooth = cfg.mri2bnd.skull.smooth;
+  tmpcfg.output = 'skull';
+  segskull = ft_volumesegment(tmpcfg, tpm);
+
+  tmpcfg.threshold  = cfg.mri2bnd.brain.threshold;
+  tmpcfg.smooth = cfg.mri2bnd.brain.smooth;
+  tmpcfg.output = 'brain';
+  segment = ft_volumesegment(tmpcfg, tpm);
+  
   segment.scalp = segscalp.scalp;
-  
-  clear segscalp
+  segment.skull = segskull.skull;
+ 
+  clear segscalp segskull
   %-----------------%
   %-------------------------------------%
   
   %-------------------------------------%
   %-mesh and headmodel
-  M = segment.transform;
+  %-----------------%
+  %-prepare mesh
+  tmpcfg = [];
+  tmpcfg.transform = segment.transform;
   
-  %-----------------%
-  %-prepare mesh for skull and brain (easy)
-  cfg2 = [];
-  cfg2.tissue = {'skull', 'brain'};
-  cfg2.numvertices = cfg.mri2bnd.numvertices(2:3);
-  cfg2.transform = M;
-  bnd = ft_prepare_mesh_new(cfg2, segment);
-  %-----------------%
+  tmpcfg.tissue = {'scalp' 'skull' 'brain'};
+  tmpcfg.numvertices = [cfg.mri2bnd.scalp.numvertices cfg.mri2bnd.skull.numvertices cfg.mri2bnd.brain.numvertices];
   
-  %-----------------%
-  %-prepare mesh for scalp
-  cfg2 = [];
-  cfg2.tissue = {'scalp'};
-  cfg2.numvertices = cfg.mri2bnd.numvertices(1);
-  cfg2.thresholdseg = cfg.mri2bnd.threshbnd;
-  cfg2.transform = M;
-  scalp = ft_prepare_mesh_new(cfg2, segment);
-  %-----------------%
-  
-  %-----------------%
-  %-combine scalp and bnd
-  bnd = [scalp bnd];
+  bnd = ft_prepare_mesh(tmpcfg, segment);
   
   save(bndfile, 'bnd')
   %-----------------%
