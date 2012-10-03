@@ -1,43 +1,31 @@
-function bnd2lead(cfg, subj)
-%BND2LEAD create leadfield, based on volume
+function bnd2lead(info, opt, subj)
+%BND2LEAD create leadfield
 %
-% CFG
-%  .data: name of projects/PROJNAME/subjects/
-%  .rec: name of the recordings (part of the structrual filename)
+% INFO
+%  .data: path of /data1/projects/PROJ/subjects/
+%  .rec: REC in /data1/projects/PROJ/recordings/REC/
 %  .vol.mod: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/
 %  .vol.cond: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/VOLCONDNAME/
-%
-%  .sens.file: file with EEG sensors. It can be sfp or mat.
-%
 %  .vol.type: method for head model ('dipoli' 'openmeeg' 'bemcp')
-%  .bnd2lead.conductivity: conductivity of tissues ([0.3300 0.0042 0.3300])
+%  .sourcespace: 'surface' or 'volume' or 'volume_warp'
+%  .sens.file: file with EEG sensors. It can be sfp or mat.
+%  .log: name of the file and directory to save log
 %
-%  .bnd2lead.loadgrid: load precomputed grid saved on file (logical) 
-%                      It should be a file like 'bnd', called 'grid'
-%                      instead with the variable 'grid' in it
-% OR
-%  .bnd2lead.mni.warp: warp or use basic grid (logical)
-%  .bnd2lead.mni.resolution: (if warp) resolution of the grid (5,6,8,10 mm)
-%  .bnd2lead.mni.nonlinear: run non-linear mni registration ('yes' or 'no')
+% CFG.OPT
+%  .conductivity*: conductivity of tissues ([0.3300 0.0042 0.3300])
+%  .inwardshift: shift inward to exclude dipoles on the edge of mesh
+%  .mni.resolution (if 'volume_warp')*: resolution of the grid (5,6,8,10 mm)
+%  .mni.nonlinear (if 'volume_warp')*: run non-linear mni registration ('yes' or 'no')
+%  .elecM: 4x4 affine matrix of the transformation of the electrodes
 %
 %  It only makes sense to warp to mni if your MRI are not already realigned
 %  in MNI space. The MNI wrapping creates a MNI-aligned grid in subject-MRI
 %  space.
 %
+% * indicates obligatory parameter
+%
 % Part of MRI2LEAD
 % see also CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, USETEMPLATE
-
-% load /data1/toolbox/elecloc/easycap_61_FT.mat elec
-% sens = [];
-% sens.elecpos = [elec.pnt; 0 0 0; 0 0 0; 0 0 0];
-% sens.chanpos = [elec.pnt; 0 0 0; 0 0 0; 0 0 0];
-% sens.label = elec.label;
-% sens.unit = 'mm';
-%
-% cfg = [];
-% cfg.template.vol = vol;
-% cfg.individual.elec = sens;
-% [cfg] = ft_interactiverealign(cfg)
 
 %---------------------------%
 %-start log
@@ -48,15 +36,17 @@ tic_t = tic;
 
 %---------------------------%
 %-dir and files
-mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % mridata dir
-mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
+mdir = sprintf('%s%04d/%s/%s/', info.data, subj, info.vol.mod, info.vol.cond); % mridata dir
+mfile = sprintf('%s_%04d_%s_%s', info.rec, subj, info.vol.mod, info.vol.cond); % mridata
 ext = '.nii.gz';
 
 bndfile = [mdir mfile '_bnd'];
 gridfile = [mdir mfile '_grid'];
-volfile = [mdir mfile '_vol_' cfg.vol.type];
-leadfile = [mdir mfile '_lead_' cfg.vol.type];
+volfile = [mdir mfile '_vol_' info.vol.type];
+leadfile = [mdir mfile '_lead_' info.vol.type];
 elecfile = [mdir mfile '_elec'];
+
+if ~isfield(opt, 'inwardshift'); opt.inwardshift = .5; end
 %---------------------------%
 
 %-------------------------------------%
@@ -69,11 +59,11 @@ end
 
 %-----------------%
 %-headmodel
+cfg  = [];
+cfg.method = info.vol.type;
+cfg.conductivity = opt.conductivity;
 try
-  cfg3  = [];
-  cfg3.method = cfg.vol.type;
-  cfg3.conductivity = cfg.bnd2lead.conductivity;
-  vol = ft_prepare_headmodel(cfg3, bnd);
+  vol = ft_prepare_headmodel(cfg, bnd);
 end
 %-----------------%
 %-------------------------------------%
@@ -89,53 +79,52 @@ if exist('vol', 'var') && isfield(vol, 'mat')
   
   %-----------------%
   %-create grid
-  cfg4 = [];
-  if isfield(cfg.bnd2lead, 'loadgrid') && cfg.bnd2lead.loadgrid
-    load(gridfile, 'grid')
-    cfg4.grid = grid;
+  cfg = [];
+  switch info.sourcespace
     
-  elseif cfg.bnd2lead.mni.warp
-    
-    if ~strcmp(cfg.normalize, '')
-      output = sprintf('%ERROR: you should use the MRI in native space, not after normalization\n', outout);
-    end
-    
-    mrifile = [mdir mfile ext]; % mri in native space, not in MNI space!
-    
-    mri = ft_read_mri(mrifile);
-    cfg4.grid.warpmni    = 'yes';
-    cfg4.grid.resolution = cfg.bnd2lead.mni.resolution;
-    cfg4.grid.nonlinear  = cfg.bnd2lead.mni.nonlinear;
-    cfg4.mri             = mri;
-    cfg4.mri.coordsys    = 'spm';
-    
-  else
-    
-    cfg4.grid.xgrid =  -70:10:70;
-    cfg4.grid.ygrid = -110:10:80;
-    cfg4.grid.zgrid =  -60:10:90;
-    
+    case 'surface'
+      
+      load(gridfile, 'grid')
+      cfg.grid = grid;
+      
+    case 'volume'
+      
+      cfg.grid.xgrid =  -70:10:70;
+      cfg.grid.ygrid = -110:10:80;
+      cfg.grid.zgrid =  -60:10:90;
+      
+      
+    case 'volume_warp'
+      mrifile = [mdir mfile ext]; % mri in native space, not in MNI space!
+      mri = ft_read_mri(mrifile);
+      cfg.mri = mri;
+      cfg.mri.coordsys    = 'spm';
+
+      cfg.grid.warpmni    = 'yes';
+      cfg.grid.resolution = opt.mni.resolution;
+      cfg.grid.nonlinear  = opt.mni.nonlinear;
+      
   end
   
-  grid = ft_prepare_sourcemodel(cfg4);
+  grid = ft_prepare_sourcemodel(cfg);
   grid = ft_convert_units(grid, 'mm');
   %-----------------%
   
   %-----------------%
   %-elec
-  elec = ft_read_sens(cfg.sens.file);
+  elec = ft_read_sens(info.sens.file);
   elec.label = upper(elec.label);
   elec = ft_convert_units(elec, 'mm');
   
   %-------%
   %-from sens space to MNI space (based on visual realignment)
   % values can be improved and hard-coded
-  elec.chanpos = warp_apply(cfg.bnd2lead.elecM, elec.chanpos);
-  elec.elecpos = warp_apply(cfg.bnd2lead.elecM, elec.elecpos);
+  elec.chanpos = warp_apply(opt.elecM, elec.chanpos);
+  elec.elecpos = warp_apply(opt.elecM, elec.elecpos);
   %-------%
   %-----------------%
   
-  if cfg.bnd2lead.mni.warp
+  if strcmp(info.sourcespace, 'volume_warp')
     %-----------------%
     %-conversion MNI to subject space
     %-------%
@@ -171,14 +160,14 @@ if exist('vol', 'var') && isfield(vol, 'mat')
   
   %-----------------%
   %-prepare leadfield
-  cfg5 = [];
-  cfg5.elec = elec;
-  cfg5.vol = vol;
-  cfg5.grid = grid;
-  cfg5.inwardshift = cfg.bnd2lead.inwardshift; % to avoid dipoles on the border of bnd(3), which are very instable
-  cfg5.grid.tight = 'no';
-  cfg5.feedback = 'none';
-  lead = ft_prepare_leadfield(cfg5, []);
+  cfg = [];
+  cfg.elec = elec;
+  cfg.vol = vol;
+  cfg.grid = grid;
+  cfg.inwardshift = opt.inwardshift; % to avoid dipoles on the border of bnd(3), which are very instable
+  cfg.grid.tight = 'no';
+  cfg.feedback = 'none';
+  lead = ft_prepare_leadfield(cfg, []);
   save(leadfile, 'lead')
   %-----------------%
   
@@ -201,7 +190,7 @@ output = [output outtmp];
 
 %-----------------%
 fprintf(output)
-fid = fopen([cfg.log '.txt'], 'a');
+fid = fopen([info.log '.txt'], 'a');
 fwrite(fid, output);
 fclose(fid);
 %-----------------%

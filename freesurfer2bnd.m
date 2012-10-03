@@ -1,23 +1,27 @@
-function freesurfer2bnd(cfg, subj)
-%FREESURFER2BND create volume, based on freesurfer 
+function freesurfer2bnd(info, opt, subj)
+%FREESURFER2BND create mesh based on MRI using freesurfer
 %
-% CFG
-%  .data: name of projects/PROJNAME/subjects/
-%  .rec: name of the recordings (part of the structrual filename)
+% INFO
+%  .data: path of /data1/projects/PROJ/subjects/
+%  .rec: REC in /data1/projects/PROJ/recordings/REC/
 %  .vol.mod: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/
 %  .vol.cond: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/VOLCONDNAME/
-%  
-%  .SUBJECTS_DIR: where the Freesurfer data is stored (like the environmental variable)
+%  .log: name of the file and directory to save log
+%
+% CFG.OPT
+%  .SUBJECTS_DIR*: where the Freesurfer data is stored (like the environmental variable), with extra slash 
 %  .surftype: name of the surface to read ('smoothwm' 'pial' 'white' 'inflated' 'orig' 'sphere')
-%  .fs2bnd.reducesurf: ratio to reducepatch of surface (1 -> intact, .5 -> half)
-%  .fs2bnd.reducegrid: ratio to reducepatch of source grid (1 -> intact, .5 -> half)
-%  .fs2bnd.smudgeiter: iteration for smudging (default = 6) (it's possible to
-%               rerun this function, only to change the amount of smudging)
+%  .reducesurf*: ratio to reducepatch of surface (1 -> intact, .5 -> half)
+%  .reducegrid*: ratio to reducepatch of source grid (1 -> intact, .5 -> half)
+%  .smudgeiter: iteration for smudging (default = 6) (it's possible to
+%               rerun this function, only to change the amount of smudging) 
+%
+% * indicates obligatory parameter
 %
 % IN
 %  You should run freesurfer and you need to create a watershed folder. It
 %  should have a "fsaverage" subject, to project the activity to.
-%  It reads the folder cfg.SUBJECTS_DIR and the subject code in it (the
+%  It reads the folder cfg.opt.SUBJECTS_DIR and the subject code in it (the
 %  subject code here and in freesurfer should match!)
 % 
 % OUT
@@ -39,19 +43,19 @@ tic_t = tic;
 %-dir and files
 %-------%
 %-surf
-sdir = sprintf('%s%04d/%s', cfg.SUBJECTS_DIR, subj, 'surf/');
+sdir = sprintf('%s%04d/%s', opt.SUBJECTS_DIR, subj, 'surf/');
 %-------%
 
 %-------%
 %-watershed
-wdir = sprintf('%s%04d/%s', cfg.SUBJECTS_DIR, subj, 'bem/watershed/');
+wdir = sprintf('%s%04d/%s', opt.SUBJECTS_DIR, subj, 'bem/watershed/');
 wfile = sprintf('%04d_', subj);
 %-------%
 
 %-------%
 %-output files
-mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % mridata dir
-mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
+mdir = sprintf('%s%04d/%s/%s/', info.data, subj, info.vol.mod, info.vol.cond); % mridata dir
+mfile = sprintf('%s_%04d_%s_%s', info.rec, subj, info.vol.mod, info.vol.cond); % mridata
 bndfile = [mdir mfile '_bnd'];
 gridfile = [mdir mfile '_grid'];
 %-------%
@@ -61,8 +65,8 @@ gridfile = [mdir mfile '_grid'];
 %-surfaces
 surface = {'outer_skin' 'inner_skull'  'brain'};
 
-if ~isfield(cfg, 'surftype'); cfg.surftype = 'smoothwm'; end
-if ~isfield(cfg.fs2bnd, 'smudgeiter'); cfg.fs2bnd.smudgeiter = 6; end
+if ~isfield(opt, 'surftype'); opt.surftype = 'smoothwm'; end
+if ~isfield(opt, 'smudgeiter'); opt.smudgeiter = 6; end
 %---------------------------%
 
 %---------------------------%
@@ -70,7 +74,7 @@ if ~isfield(cfg.fs2bnd, 'smudgeiter'); cfg.fs2bnd.smudgeiter = 6; end
 for i = 1:numel(surface)
   bndtmp = ft_read_headshape([wdir wfile surface{i} '_surface']);
   
-  bnd(i) = reducebnd(bndtmp, cfg.fs2bnd.reducesurf);
+  bnd(i) = reducebnd(bndtmp, opt.reducesurf);
 end
 
 save(bndfile, 'bnd')
@@ -80,13 +84,13 @@ save(bndfile, 'bnd')
 %-prepare grid
 hemi = {'lh.' 'rh.'};
 for i = 1:numel(hemi)
-  highres = ft_read_headshape([sdir hemi{i} cfg.surftype]);
-  lowres{i} = reducebnd(highres, cfg.fs2bnd.reducegrid);
+  highres = ft_read_headshape([sdir hemi{i} opt.surftype]);
+  lowres{i} = reducebnd(highres, opt.reducegrid);
   
   %-------%
   %-use smudge, from fieldtrip/private
   [datin, loc] = ismember(highres.pnt, lowres{i}.pnt, 'rows');
-  [datout, S1] = smudge(datin, highres.tri, cfg.fs2bnd.smudgeiter);
+  [datout, S1] = smudge(datin, highres.tri, opt.smudgeiter);
   
   sel = find(datin);
   S2  = sparse(sel(:), loc(datin), ones(size(lowres{i}.pnt,1),1), size(highres.pnt,1), size(lowres{i}.pnt,1));
@@ -109,7 +113,7 @@ output = [output outtmp];
 
 %-----------------%
 fprintf(output)
-fid = fopen([cfg.log '.txt'], 'a');
+fid = fopen([info.log '.txt'], 'a');
 fwrite(fid, output);
 fclose(fid);
 %-----------------%

@@ -1,16 +1,22 @@
-function cpmri(cfg, subj)
+function cpmri(info, opt, subj)
 %CPMRI copy MRI images into subject-folder and normalize them
 %
 % CFG
 %  .rec: name of the recordings (part of the structrual filename)
-%  .recs: name of recordings/RECNAME/subjects/
-%  .data: name of projects/PROJNAME/subjects/
+
+% INFO
+%  .data: path of /data1/projects/PROJ/subjects/
+%  .rec: REC in /data1/projects/PROJ/recordings/REC/
 %  .vol.mod: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/
 %  .vol.cond: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/VOLCONDNAME/
+%  .smri: folder containing all the MRI images
+%  .log: name of the file and directory to save log
 %
-%  .normalize: use '_spm' or '_flirt' for spatial normalization to MNI or
-%  ''  for no normalization (note the underscore)
+% CFG.OPT
+%  .normalize: normalization ('none' 'spm8' 'flirt')
 %  .smri: directory to copy all the structrual data to (can be empty)
+%
+% * indicates obligatory parameter
 %
 % Part of MRI2LEAD
 % see also CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, USETEMPLATE
@@ -26,12 +32,12 @@ tic_t = tic;
 %-dir and files
 ft_hastoolbox('spm8', 2);
 
-rdir = sprintf('%s%04.f/%s/%s/', cfg.recs, subj, cfg.vol.mod, 'raw'); % recording
-mdir = sprintf('%s%04.f/%s/%s/', cfg.data, subj, cfg.vol.mod, cfg.vol.cond); % mridata dir
+rdir = sprintf('%s%04.f/%s/%s/', info.recs, subj, info.vol.mod, 'raw'); % recording
+mdir = sprintf('%s%04.f/%s/%s/', info.data, subj, info.vol.mod, info.vol.cond); % mridata dir
 if ~isdir(mdir); mkdir(mdir); end
 
-rfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % recording
-mfile = sprintf('%s_%04.f_%s_%s', cfg.rec, subj, cfg.vol.mod, cfg.vol.cond); % mridata
+rfile = sprintf('%s_%04.f_%s_%s', info.rec, subj, info.vol.mod, info.vol.cond); % recording
+mfile = sprintf('%s_%04.f_%s_%s', info.rec, subj, info.vol.mod, info.vol.cond); % mridata
 
 ext = '.nii.gz';
 %---------------------------%
@@ -45,7 +51,7 @@ if exist([rdir rfile ext], 'file')
   end
   %---------------------------%
   
-  if strcmp(cfg.normalize, '_flirt')
+  if strcmp(opt.normalize, 'flirt')
     %-----------------------------------------------%
     %-USE FLIRT
     
@@ -70,7 +76,7 @@ if exist([rdir rfile ext], 'file')
     %-------%
     %-apply flirt
     bash(['flirt -in ' mdir mfile ' -ref /usr/share/data/fsl-mni152-templates/MNI152_T1_1mm_brain.nii.gz ' ...
-      '-out ' mdir mfile cfg.normalize ' -applyxfm -init ' mdir mfile '_brain_flirt.mat']);
+      '-out ' mdir mfile '_' opt.normalize ' -applyxfm -init ' mdir mfile '_brain_flirt.mat']);
     %-------%
     
     %-------%
@@ -89,9 +95,10 @@ if exist([rdir rfile ext], 'file')
     % delete([mdir '*_brain*'])
     %-------%
     %---------------------------%
+    appendname = ['_' opt.normalize];
     %-----------------------------------------------%
     
-  elseif strcmp(cfg.normalize, '_spm')
+  elseif strcmp(opt.normalize, 'spm8')
     
     %-----------------------------------------------%
     %-spm
@@ -132,21 +139,24 @@ if exist([rdir rfile ext], 'file')
     
     %---------------------------%
     %-clean up
-    uncomp = [mdir mfile cfg.normalize ext(1:4)];
+    uncomp = [mdir mfile '_' opt.normalize ext(1:4)];
     bash(['mv ' mdir rflags.prefix mfile ext(1:4) ' ' uncomp]);
     gzip(uncomp);
     
     delete([mdir mfile ext(1:4)])
     delete(uncomp);
     %---------------------------%
+    appendname = ['_' opt.normalize];
     %-----------------------------------------------%
     
+  else
+    appendname = '';
   end
   
   %---------------------------%
   %-copy data to main directory
-  if ~isempty(cfg.smri)
-    bash(['ln ' mdir mfile cfg.normalize '.nii.gz ' cfg.smri mfile cfg.normalize ext]);
+  if ~isempty(info.smri)
+    bash(['ln ' mdir mfile appendname '.nii.gz ' info.smri mfile appendname ext]);
   end
   %---------------------------%
   
@@ -168,7 +178,7 @@ output = [output outtmp];
 
 %-----------------%
 fprintf(output)
-fid = fopen([cfg.log '.txt'], 'a');
+fid = fopen([info.log '.txt'], 'a');
 fwrite(fid, output);
 fclose(fid);
 %-----------------%

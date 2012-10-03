@@ -1,1 +1,105 @@
-create vol and leadfield based on individual MRIs using Fieldtrip
+Create vol and leadfield based on individual MRIs using Fieldtrip
+
+-----------------------------------------------------------
+MAIN FUNCTIONS
+- CPMRI: copy MRI images into subject-folder and normalize them
+- MRI2BND: create mesh based on MRI using fieldtrip segmentation
+- FREESURFER2BND: create mesh based on MRI using freesurfer
+- BND2LEAD: create leadfield
+-----------------------------------------------------------
+
+-----------------------------------------------------------
+INFO
+.data: path of /data1/projects/PROJ/subjects/
+  CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, 
+  
+.log: name of the file and directory to save log
+  CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, 
+  
+.smri: folder containing all the MRI images
+  CPMRI, 
+  
+.rec: REC in /data1/projects/PROJ/recordings/REC/
+  CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, 
+
+.recs: name of recordings/RECNAME/subjects/
+  CPMRI, 
+  
+.sens.file: file with EEG sensors. It can be sfp or mat.
+  BND2LEAD,
+  
+.sourcespace: 'surface' or 'volume' or 'volume_warp'
+  BND2LEAD
+  
+.vol.cond: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/VOLCONDNAME/
+  CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, 
+  
+.vol.mod: name to be used in projects/PROJNAME/subjects/0001/VOLMOD/
+  CPMRI, MRI2BND, FREESURFER2BND, BND2LEAD, 
+  
+.vol.type: bem-model ('dipoli' or 'openmeeg')
+  BND2LEAD, 
+-----------------------------------------------------------
+  
+-----------------------------------------------------------
+CFG.OPT
+
+.brain.smooth: smoothing kernel for brain (5 cm)
+  MRI2BND, 
+
+.brain.threshold: threshold of tpm for brain (0.5)
+  MRI2BND, 
+
+.brain.numvertices: # vertices for brain (2500)
+  MRI2BND, 
+  
+.conductivity: conductivity of tissues ([0.3300 0.0042 0.3300])
+  BND2LEAD,  
+  
+.elecM: 4x4 affine matrix of the transformation of the electrodes
+  BND2LEAD, 
+
+.mni.nonlinear (if 'volume_warp')*: run non-linear mni registration ('yes' or 'no')
+  BND2LEAD,  
+  
+.mni.resolution (if 'volume_warp')*: resolution of the grid (5,6,8,10 mm)
+  BND2LEAD,  
+
+.normalize: normalization ('none' 'spm8' 'flirt')
+  CPMRI, MRI2BND, 
+
+.reducesurf: ratio to reducepatch of surface (1 -> intact, .5 -> half)
+  FREESURFER2BND,
+
+.reducegrid: ratio to reducepatch of source grid (1 -> intact, .5 -> half)
+  FREESURFER2BND,
+  
+.scalp.smooth: smoothing kernel for scalp (5 cm)
+  MRI2BND, 
+
+.scalp.threshold: threshold of tpm for scalp (0.1)
+  MRI2BND, 
+
+.scalp.numvertices: # vertices for scalp (2500)
+  MRI2BND, 
+
+.skull.smooth: smoothing kernel for skull (5 cm)
+  MRI2BND, 
+
+.skull.threshold: threshold of tpm for skull (0.5)
+  MRI2BND, 
+
+.skull.numvertices: # vertices for skull (2500)
+  MRI2BND, 
+
+.smudgeiter: iteration for smudging (default = 6) (it's possible to rerun this function, only to change the amount of smudging)
+  FREESURFER2BND,
+  
+.SUBJECTS_DIR: where the Freesurfer data is stored (like the environmental variable), with extra slash 
+  FREESURFER2BND,
+
+.surftype: name of the surface to read ('smoothwm' 'pial' 'white' 'inflated' 'orig' 'sphere')  
+  FREESURFER2BND,
+-----------------------------------------------------------
+
+
