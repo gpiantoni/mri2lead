@@ -63,7 +63,9 @@ cfg  = [];
 cfg.method = info.vol.type;
 cfg.conductivity = opt.conductivity;
 try
-  vol = ft_prepare_headmodel(cfg, bnd);
+  vol = AAAft_prepare_headmodel(cfg, bnd);
+catch
+  load(volfile)
 end
 %-----------------%
 %-------------------------------------%
@@ -86,13 +88,14 @@ if exist('vol', 'var') && isfield(vol, 'mat')
       
       load(gridfile, 'grid')
       cfg.grid = grid;
-      
+      grid = ft_prepare_sourcemodel(cfg);
+  
     case 'volume'
       
-      cfg.grid.xgrid =  -70:10:70;
-      cfg.grid.ygrid = -110:10:80;
-      cfg.grid.zgrid =  -60:10:90;
-      
+      grid.xgrid =  -70:10:70;
+      grid.ygrid = -110:10:80;
+      grid.zgrid =  -60:10:90;
+      grid.unit = 'mm';
       
     case 'volume_warp'
       mrifile = [mdir mfile ext]; % mri in native space, not in MNI space!
@@ -104,10 +107,11 @@ if exist('vol', 'var') && isfield(vol, 'mat')
       cfg.grid.resolution = opt.mni.resolution;
       cfg.grid.nonlinear  = opt.mni.nonlinear;
       
+      grid = ft_prepare_sourcemodel(cfg);
+
   end
   
-  grid = ft_prepare_sourcemodel(cfg);
-  grid = ft_convert_units(grid, 'mm');
+  grid = ft_convert_units(grid, 'mm');  
   %-----------------%
   
   %-----------------%
@@ -129,17 +133,10 @@ if exist('vol', 'var') && isfield(vol, 'mat')
     %-conversion MNI to subject space
     %-------%
     %-get realignment from subject-space to MNI space
-    % The ideal solution is to use ft_volumenormalise. However, the
-    % transformation matrix was completely wrong. So, we read the
-    % transformation matrix from cpmri with option '_spm'. In this case,
-    % however, we use the raw MRI
-    outsn = [mdir mfile '_sn.mat']; % transformation from subject to MNI space
-    if ~exist(outsn, 'file')
-      output = sprintf(['%sERROR: you should run once ''cpmri'' with option cfg.normalize = ''_spm'', which creates a transformation matrix\n' ...
-        'then, run ''mri2bnd'' and ''bnd2lead'', with cfg.normalize = ''''\nNo transformation applied, check results!!!!\n'], output);
-    end
-    load(outsn)
-    struct2mni = VG.mat / Affine / VF.mat;
+    % It uses the information from ft_volumenormalise. However, it does not
+    % give very reliable results. Please, double-check this option before
+    % using it.
+    struct2mni = grid.params.VG.mat / grid.params.Affine / grid.params.VF.mat;
     mni2struct = inv(struct2mni);
     %-------%
     

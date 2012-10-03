@@ -11,8 +11,8 @@ function freesurfer2bnd(info, opt, subj)
 % CFG.OPT
 %  .SUBJECTS_DIR*: where the Freesurfer data is stored (like the environmental variable), with extra slash 
 %  .surftype: name of the surface to read ('smoothwm' 'pial' 'white' 'inflated' 'orig' 'sphere')
-%  .reducesurf*: ratio to reducepatch of surface (1 -> intact, .5 -> half)
-%  .reducegrid*: ratio to reducepatch of source grid (1 -> intact, .5 -> half)
+%  .reducesurf*: ratio to reducepatch of surface (1 -> intact, .5 -> half, around .3)
+%  .reducegrid*: ratio to reducepatch of source grid (1 -> intact, .5 -> half, around .01)
 %  .smudgeiter: iteration for smudging (default = 6) (it's possible to
 %               rerun this function, only to change the amount of smudging) 
 %
