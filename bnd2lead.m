@@ -63,7 +63,7 @@ cfg  = [];
 cfg.method = info.vol.type;
 cfg.conductivity = opt.conductivity;
 try
-  vol = AAAft_prepare_headmodel(cfg, bnd);
+  vol = ft_prepare_headmodel(cfg, bnd);
 catch
   load(volfile)
 end
