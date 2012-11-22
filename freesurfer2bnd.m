@@ -12,7 +12,7 @@ function freesurfer2bnd(info, opt, subj)
 %  .SUBJECTS_DIR*: where the Freesurfer data is stored (like the environmental variable), with extra slash 
 %  .surftype: name of the surface to read ('smoothwm' 'pial' 'white' 'inflated' 'orig' 'sphere')
 %  .reducesurf*: ratio to reducepatch of surface (1 -> intact, .5 -> half, around .3)
-%  .reducegrid*: ratio to reducepatch of source grid (1 -> intact, .5 -> half, around .01)
+%  .ico: option to pass to as --ico to mne_setup_source_space (default: 6)
 %  .smudgeiter: iteration for smudging (default = 6) (it's possible to
 %               rerun this function, only to change the amount of smudging) 
 %
@@ -48,7 +48,8 @@ sdir = sprintf('%s%04d/%s', opt.SUBJECTS_DIR, subj, 'surf/');
 
 %-------%
 %-watershed
-wdir = sprintf('%s%04d/%s', opt.SUBJECTS_DIR, subj, 'bem/watershed/');
+bdir = sprintf('%s%04d/%s', opt.SUBJECTS_DIR, subj, 'bem/');
+wdir = [bdir 'watershed/'];
 wfile = sprintf('%04d_', subj);
 %-------%
 
@@ -65,7 +66,8 @@ gridfile = [mdir mfile '_grid'];
 %-surfaces
 surface = {'outer_skin' 'inner_skull'  'brain'};
 
-if ~isfield(opt, 'surftype'); opt.surftype = 'smoothwm'; end
+if ~isfield(opt, 'ico'); opt.ico = 6; end
+if ~isfield(opt, 'surftype'); opt.surftype = 'white'; end % default of mne_setup_source_space
 if ~isfield(opt, 'smudgeiter'); opt.smudgeiter = 6; end
 %---------------------------%
 
@@ -82,25 +84,33 @@ save(bndfile, 'bnd')
 
 %---------------------------%
 %-prepare grid
-hemi = {'lh.' 'rh.'};
-for i = 1:numel(hemi)
-  highres = ft_read_headshape([sdir hemi{i} opt.surftype]);
-  lowres{i} = reducebnd(highres, opt.reducegrid);
-  
-  %-------%
-  %-use smudge, from fieldtrip/private
-  [datin, loc] = ismember(highres.pnt, lowres{i}.pnt, 'rows');
-  [datout, S1] = smudge(datin, highres.tri, opt.smudgeiter);
-  
-  sel = find(datin);
-  S2  = sparse(sel(:), loc(datin), ones(size(lowres{i}.pnt,1),1), size(highres.pnt,1), size(lowres{i}.pnt,1));
-  interpmat{i} = S1 * S2;
-  %-------%
-  
-end
+%-----------------%
+%-reduce source space in MNE
+%so that the space remains constant
+bash(sprintf('export SUBJECTS_DIR=%s; mne_setup_source_space --subject %04d --ico %d --surface %s', opt.SUBJECTS_DIR, subj, opt.ico, opt.surftype))
+%-----------------%
 
-grid.pos = [lowres{1}.pnt; lowres{2}.pnt];
-save(gridfile, 'grid', 'lowres', 'interpmat')
+%-----------------%
+%-read the datafile
+sourcefile = sprintf('%s%04d-ico-%d-src.fif', bdir, subj, opt.ico);
+grid = ft_read_headshape(sourcefile, 'format', 'mne_source');
+
+grid = ft_convert_units(grid, 'mm');
+grid.orig = ft_convert_units(grid.orig, 'mm');
+%-----------------%
+
+%-----------------%
+%-use smudge, from fieldtrip/private
+[datin, loc] = ismember(grid.orig.pnt, grid.pnt, 'rows');
+[datout, S1] = smudge(datin, grid.orig.tri, opt.smudgeiter);
+
+sel = find(datin);
+S2  = sparse(sel(:), loc(datin), ones(size(grid.pnt,1),1), size(grid.orig.pnt,1), size(grid.pnt,1));
+interpmat = S1 * S2;
+%-----------------%
+
+grid.pos = grid.pnt;
+save(gridfile, 'grid', 'interpmat')
 %---------------------------%
 
 %---------------------------%
