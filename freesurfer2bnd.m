@@ -56,6 +56,7 @@ wfile = sprintf('%04d_', subj);
 %-------%
 %-output files
 mdir = sprintf('%s%04d/%s/%s/', info.data, subj, info.vol.mod, info.vol.cond); % mridata dir
+if ~isdir(mdir); mkdir(mdir); end
 mfile = sprintf('%s_%04d_%s_%s', info.rec, subj, info.vol.mod, info.vol.cond); % mridata
 bndfile = [mdir mfile '_bnd'];
 gridfile = [mdir mfile '_grid'];
