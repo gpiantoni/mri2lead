@@ -12,7 +12,9 @@ function freesurfer2bnd(info, opt, subj)
 %  .SUBJECTS_DIR*: where the Freesurfer data is stored (like the environmental variable), with extra slash 
 %  .surftype: name of the surface to read ('smoothwm' 'pial' 'white' 'inflated' 'orig' 'sphere')
 %  .reducesurf*: ratio to reducepatch of surface (1 -> intact, .5 -> half, around .3)
-%  .ico: option to pass to as --ico to mne_setup_source_space (default: 6)
+%  .ico: option to pass as --ico to mne_setup_source_space (default: 6)
+%  .spacing: option to pass as --spacing to mne_setup_source_space (you
+%            cannot use 'ico' and 'spacing' at the same time)
 %  .smudgeiter: iteration for smudging (default = 6) (it's possible to
 %               rerun this function, only to change the amount of smudging) 
 %
@@ -67,7 +69,12 @@ gridfile = [mdir mfile '_grid'];
 %-surfaces
 surface = {'outer_skin' 'inner_skull'  'brain'};
 
-if ~isfield(opt, 'ico'); opt.ico = 6; end
+if ~isfield(opt, 'ico') && ~isfield(opt, 'spacing'); opt.ico = 6; end
+if isfield(opt, 'ico') && isfield(opt, 'spacing')
+  output = [output sprintf('You can specify either ''ico'' or ''spacing'' but not both. Only using ''ico''\n')];
+  opt = rmfield(opt, 'spacing');
+end
+
 if ~isfield(opt, 'surftype'); opt.surftype = 'white'; end % default of mne_setup_source_space
 if ~isfield(opt, 'smudgeiter'); opt.smudgeiter = 6; end
 %---------------------------%
@@ -88,12 +95,17 @@ save(bndfile, 'bnd')
 %-----------------%
 %-reduce source space in MNE
 %so that the space remains constant
-bash(sprintf('export SUBJECTS_DIR=%s; mne_setup_source_space --subject %04d --ico %d --surface %s', opt.SUBJECTS_DIR, subj, opt.ico, opt.surftype))
+if isfield(opt, 'ico')
+  bash(sprintf('export SUBJECTS_DIR=%s; mne_setup_source_space --subject %04d --ico %d --surface %s', opt.SUBJECTS_DIR, subj, opt.ico, opt.surftype))
+  sourcefile = sprintf('%s%04d-ico-%d-src.fif', bdir, subj, opt.ico);
+else
+  bash(sprintf('export SUBJECTS_DIR=%s; mne_setup_source_space --subject %04d --spacing %d --surface %s', opt.SUBJECTS_DIR, subj, opt.spacing, opt.surftype))
+  sourcefile = sprintf('%s%04d-%d-src.fif', bdir, subj, opt.spacing);
+end
 %-----------------%
 
 %-----------------%
 %-read the datafile
-sourcefile = sprintf('%s%04d-ico-%d-src.fif', bdir, subj, opt.ico);
 grid = ft_read_headshape(sourcefile, 'format', 'mne_source');
 
 grid = ft_convert_units(grid, 'mm');
