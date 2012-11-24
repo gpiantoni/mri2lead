@@ -16,7 +16,7 @@ function bnd2lead(info, opt, subj)
 %  .inwardshift: shift inward to exclude dipoles on the edge of mesh
 %  .mni.resolution (if 'volume_warp')*: resolution of the grid (5,6,8,10 mm)
 %  .mni.nonlinear (if 'volume_warp')*: run non-linear mni registration ('yes' or 'no')
-%  .elecM: 4x4 affine matrix of the transformation of the electrodes
+%  .elecM*: 4x4 affine matrix of the transformation of the electrodes
 %
 %  It only makes sense to warp to mni if your MRI are not already realigned
 %  in MNI space. The MNI wrapping creates a MNI-aligned grid in subject-MRI
@@ -123,8 +123,8 @@ if exist('vol', 'var') && isfield(vol, 'mat')
   %-------%
   %-from sens space to MNI space (based on visual realignment)
   % values can be improved and hard-coded
-  elec.chanpos = warp_apply(opt.elecM, elec.chanpos);
-  elec.elecpos = warp_apply(opt.elecM, elec.elecpos);
+  elec.chanpos = warp_apply(opt.elecM, elec.chanpos, 'homogeneous');
+  elec.elecpos = warp_apply(opt.elecM, elec.elecpos, 'homogeneous');
   %-------%
   %-----------------%
   
